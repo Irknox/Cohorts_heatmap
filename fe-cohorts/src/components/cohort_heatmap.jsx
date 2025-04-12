@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from "react";
 import * as echarts from "echarts";
 import { getBalanceData } from "../services/cohort_services";
-import {
-    Box,
-    Button,
-    Grid,
-    TextField,
-    Typography
-} from "@mui/material";
+import { Box, Button, Grid, TextField, Typography} from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
 
 const CohortHeatmap = () => {
     const [chartData, setChartData] = useState([]);
@@ -38,7 +31,10 @@ const CohortHeatmap = () => {
                 x: item.quincena - 1,
                 y: uniqueCohortNames.indexOf(item.nombre_cohorte),
                 porcentaje: item.porcentaje_activas,
-                cantidad: item.cantidad_activas
+                cantidad: item.cantidad_activas,
+                fecha: item.fecha,
+                tipo_linea: item.tipo_linea, // nuevo campo
+                total_vendido: item.total_vendido // nuevo campo
             }));
 
             setCohortNames(uniqueCohortNames);
@@ -67,24 +63,39 @@ const CohortHeatmap = () => {
                         return `
                             <b>Cohorte:</b> ${cohortNames[dataItem.y]}<br/>
                             <b>Quincena:</b> ${dataItem.x + 1}<br/>
+                            <b>Fecha quincena:</b> ${dataItem.fecha}<br/>
+                            <b>Tipo contrato:</b> ${dataItem.tipo_linea}<br/>
+                            <b>Total vendido:</b> ${dataItem.total_vendido}<br/> 
                             <b>Porcentaje Activas:</b> ${dataItem.porcentaje}%<br/>
-                            <b>Cantidad Activas:</b> ${dataItem.cantidad}
+                            <b>Cantidad Activas:</b> ${dataItem.cantidad}<br/>
                         `;
                     },
                 },
                 grid: {
-                    height: "90%",
-                    width: "84%",
+                    height: "100%",
+                    width: "85%",
+                    left: 120, // más espacio para el eje Y
+                    top: 60,
+                    
                 },
                 xAxis: {
                     type: "category",
                     data: Array.from({ length: 36 }, (_, i) => `Q${i + 1}`),
                     splitArea: { show: true },
+                    axisLabel: {
+                        fontSize: 10,
+                    }
                 },
                 yAxis: {
                     type: "category",
                     data: cohortNames,
                     splitArea: { show: true },
+                    axisLabel: {
+                        fontSize: 9,
+                        overflow: "break",
+                        width: 95,
+                        lineHeight: 9,
+                    }
                 },
                 visualMap: {
                     min: 0,
@@ -95,7 +106,9 @@ const CohortHeatmap = () => {
                     top: "middle",
                     text: ["Porcentaje Activas"],
                     inRange: {
-                        color: ["#e3735c", "#f3fa5b", "#2dcbb3", "#1deb5b"],
+                        color: ["#fd2e1a", "#cccf0a", "#54c60a", "#24bd09"]
+
+
                     },
                 },
                 series: [
@@ -109,6 +122,9 @@ const CohortHeatmap = () => {
                                 const dataItem = chartData[params.dataIndex];
                                 return `${dataItem.porcentaje}%\n(${dataItem.cantidad})`;
                             },
+                            fontSize: 9,
+                            color: "#000",
+                            padding: [2, 2, 2, 2]
                         },
                         emphasis: {
                             itemStyle: {
@@ -129,7 +145,7 @@ const CohortHeatmap = () => {
     };
 
     return (
-        <Box sx={{ width: "100%", height: "100%" }}>
+        <Box sx={{ width: "100%", height: "100vh" }}>
             <Box sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
                     Filtros
@@ -179,7 +195,7 @@ const CohortHeatmap = () => {
             {loading ? (
                 <Typography variant="body1" sx={{ p: 3 }}>Cargando datos...</Typography>
             ) : (
-                <Box id="main" sx={{ width: "100%", height: "80vh" }}></Box>
+                <Box id="main" sx={{ width: "100%", height: "100vh" }}></Box>
             )}
         </Box>
     );

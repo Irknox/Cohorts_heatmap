@@ -34,14 +34,28 @@ const CohortFilters = ({ onFilterChange }) => {
   };
 
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <label style={{ marginRight: '0.5rem' }}>Selecciona una fecha de inicio:</label>
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center',
+      gap: '0.5rem', 
+      marginBottom: '0.5rem', 
+      marginTop: '0.2rem',
+      fontSize: '0.85rem' 
+    }}>
+      <label style={{ marginRight: '0.25rem' }}>Selecciona una fecha de inicio:</label>
       <input
         type="date"
         value={selectedFecha}
         min={fechas.min_fecha}
         max={fechas.max_fecha}
         onChange={handleChange}
+        style={{
+          height: '1.8rem',
+          padding: '0.1rem 0.4rem',
+          fontSize: '0.8rem',
+          border: '1px solid #ccc',
+          borderRadius: '4px'
+        }}
       />
     </div>
   );
