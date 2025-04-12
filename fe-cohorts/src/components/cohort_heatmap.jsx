@@ -155,6 +155,17 @@ const CohortHeatmap = () => {
         setDrawerOpen(false);
     };
 
+    const resetFilters = () => {
+        const defaultFilters = {
+            start_date: null,
+            end_date: null,
+            quincena: ''
+        };
+        setFilters(defaultFilters);
+        fetchData(defaultFilters);
+        setDrawerOpen(false);
+    };
+
     return (
         <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
             <Box sx={{ display: "flex", alignItems: "center", p: 1 }}>
@@ -167,78 +178,103 @@ const CohortHeatmap = () => {
             </Box>
 
             <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-    <Box
-        sx={{
-            width: 320,
-            p: 3,
-            height: "100%",
-            backgroundColor: "#eae4ec", 
-            fontFamily: "Roboto, sans-serif", 
-        }}
-    >
-        <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: 600, color: "#A02383" }}
-        >
-            Filtros
-        </Typography>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <DatePicker
-                        label="Fecha Inicio"
-                        value={filters.start_date}
-                        onChange={(value) => setFilters({ ...filters, start_date: value })}
-                        slotProps={{
-                            textField: {
-                                fullWidth: true,
-                                size: "small",
-                                variant: "outlined"
-                            }
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <DatePicker
-                        label="Fecha Fin"
-                        value={filters.end_date}
-                        onChange={(value) => setFilters({ ...filters, end_date: value })}
-                        slotProps={{
-                            textField: {
-                                fullWidth: true,
-                                size: "small",
-                                variant: "outlined"
-                            }
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        label="Quincena"
-                        type="number"
-                        inputProps={{ min: 1, max: 36 }}
-                        value={filters.quincena}
-                        onChange={(e) => setFilters({ ...filters, quincena: e.target.value })}
-                        size="small"
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        onClick={applyFilters}
-                        sx={{ mt: 1, fontWeight: 500 }}
+                <Box
+                    sx={{
+                        width: 320,
+                        p: 3,
+                        height: "100%",
+                        backgroundColor: "#eae4ec",
+                        fontFamily: "Roboto, sans-serif",
+                    }}
+                >
+                    <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{ fontWeight: 600, color: "#A02383" }}
                     >
-                        Aplicar Filtros
-                    </Button>
-                </Grid>
-            </Grid>
-        </LocalizationProvider>
-    </Box>
-</Drawer>
+                        Filtros
+                    </Typography>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <DatePicker
+                                    label="Fecha Inicio"
+                                    value={filters.start_date}
+                                    onChange={(value) => setFilters({ ...filters, start_date: value })}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            variant: "outlined"
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <DatePicker
+                                    label="Fecha Fin"
+                                    value={filters.end_date}
+                                    onChange={(value) => setFilters({ ...filters, end_date: value })}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            variant: "outlined"
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Quincena"
+                                    type="number"
+                                    inputProps={{ min: 1, max: 36 }}
+                                    value={filters.quincena}
+                                    onChange={(e) => setFilters({ ...filters, quincena: e.target.value })}
+                                    size="small"
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={applyFilters}
+                                    sx={{
+                                        mt: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: "#A02383",
+                                        "&:hover": {
+                                            backgroundColor: "#7c1d66",
+                                        },
+                                    }}
+                                >
+                                    Aplicar Filtros
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="outlined"
+                                    fullWidth
+                                    onClick={resetFilters}
+                                    sx={{
+                                        fontWeight: 500,
+                                        color: "#A02383",
+                                        borderColor: "#A02383",
+                                        "&:hover": {
+                                            backgroundColor: "#f4e9f2",
+                                            borderColor: "#7c1d66",
+                                            color: "#7c1d66",
+                                        },
+                                    }}
+                                >
+                                    Resetear Filtros
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </LocalizationProvider>
+                </Box>
+            </Drawer>
 
             {loading ? (
                 <Typography variant="body1" sx={{ p: 3 }}>Cargando datos...</Typography>
