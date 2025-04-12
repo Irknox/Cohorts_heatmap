@@ -1,37 +1,62 @@
 import React, { useEffect, useState } from "react";
 import * as echarts from "echarts";
 import { getBalanceData } from "../services/cohort_services";
+import {
+    Box,
+    Button,
+    Drawer,
+    Grid,
+    IconButton,
+    TextField,
+    Typography
+} from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const CohortHeatmap = () => {
     const [chartData, setChartData] = useState([]);
     const [cohortNames, setCohortNames] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        start_date: null,
+        end_date: null,
+        quincena: ''
+    });
+
+    const fetchData = async (appliedFilters = {}) => {
+        setLoading(true);
+        try {
+            const queryFilters = {
+                ...appliedFilters,
+                start_date: appliedFilters.start_date ? appliedFilters.start_date.format("YYYY-MM-DD") : null,
+                end_date: appliedFilters.end_date ? appliedFilters.end_date.format("YYYY-MM-DD") : null,
+            };
+
+            const data = await getBalanceData(queryFilters);
+            const uniqueCohortNames = [...new Set(data.map(item => item.nombre_cohorte))];
+
+            const transformedData = data.map(item => ({
+                x: item.quincena - 1,
+                y: uniqueCohortNames.indexOf(item.nombre_cohorte),
+                porcentaje: item.porcentaje_activas,
+                cantidad: item.cantidad_activas,
+                fecha: item.fecha,
+                tipo_linea: item.tipo_linea,
+                total_vendido: item.total_vendido
+            }));
+
+            setCohortNames(uniqueCohortNames);
+            setChartData(transformedData);
+        } catch (error) {
+            console.error("Error al obtener los datos:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const data = await getBalanceData();
-
-                // Extraer nombres únicos de cohortes para el eje Y
-                const uniqueCohortNames = [...new Set(data.map(item => item.nombre_cohorte))];
-
-                // Transformar los datos para el heatmap
-                const transformedData = data.map(item => ({
-                    x: item.quincena - 1, // Eje X (quincena, ajustado a índice 0)
-                    y: uniqueCohortNames.indexOf(item.nombre_cohorte), // Eje Y (índice del nombre de cohorte)
-                    porcentaje: item.porcentaje_activas, // Valor (porcentaje activas)
-                    cantidad: item.cantidad_activas // Valor adicional (cantidad activas)
-                }));
-
-                setCohortNames(uniqueCohortNames);
-                setChartData(transformedData);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error al obtener los datos:", error);
-                setLoading(false);
-            }
-        };
-
         fetchData();
     }, []);
 
@@ -48,53 +73,66 @@ const CohortHeatmap = () => {
                         return `
                             <b>Cohorte:</b> ${cohortNames[dataItem.y]}<br/>
                             <b>Quincena:</b> ${dataItem.x + 1}<br/>
+                            <b>Fecha quincena:</b> ${dataItem.fecha}<br/>
+                            <b>Tipo contrato:</b> ${dataItem.tipo_linea}<br/>
+                            <b>Total vendido:</b> ${dataItem.total_vendido}<br/> 
                             <b>Porcentaje Activas:</b> ${dataItem.porcentaje}%<br/>
-                            <b>Cantidad Activas:</b> ${dataItem.cantidad}
+                            <b>Cantidad Activas:</b> ${dataItem.cantidad}<br/>
                         `;
                     },
                 },
                 grid: {
-                    height: "90%",
-                    width: "84%",
+                    height: "100%",
+                    width: "86%",
+                    left: 120,
+                    top: 60,
+                    bottom: 30
                 },
                 xAxis: {
                     type: "category",
-                    data: Array.from({ length: 36 }, (_, i) => `Q${i + 1}`), // Quincenas del 1 al 36
-                    splitArea: {
-                        show: true,
-                    },
+                    data: Array.from({ length: 36 }, (_, i) => `Q${i + 1}`),
+                    splitArea: { show: true },
+                    axisLabel: {
+                        fontSize: 12,
+                    }
                 },
                 yAxis: {
                     type: "category",
-                    data: cohortNames, 
-                    splitArea: {
-                        show: true,
-                    },
+                    data: cohortNames,
+                    splitArea: { show: true },
+                    axisLabel: {
+                        fontSize: 12,
+                        overflow: "truncate",
+                        width: 99,
+                        lineHeight: 14,
+                    }
                 },
                 visualMap: {
                     min: 0,
-                    max: 100, // Porcentaje máximo
+                    max: 100,
                     calculable: true,
                     orient: "vertical",
                     right: "right",
                     top: "middle",
-           
                     text: ["Porcentaje Activas"],
                     inRange: {
-                        color: ["#e3735c", "#f3fa5b", "#2dcbb3", "#1deb5b"], // Gradiente de colores: rojo -> azul -> verde
+                        color: ["#fd2e1a", "#cccf0a", "#54c60a", "#24bd09"]
                     },
                 },
                 series: [
                     {
                         name: "Cohortes",
                         type: "heatmap",
-                        data: chartData.map(({ x, y, porcentaje }) => [x, y, porcentaje]), // Solo pasamos [x, y, porcentaje] para el heatmap
+                        data: chartData.map(({ x, y, porcentaje }) => [x, y, porcentaje]),
                         label: {
                             show: true,
                             formatter: (params) => {
                                 const dataItem = chartData[params.dataIndex];
                                 return `${dataItem.porcentaje}%\n(${dataItem.cantidad})`;
                             },
+                            fontSize: 10,
+                            color: "#000",
+                            padding: [3, 3, 3, 3]
                         },
                         emphasis: {
                             itemStyle: {
@@ -107,17 +145,143 @@ const CohortHeatmap = () => {
             };
 
             myChart.setOption(option);
+            window.addEventListener("resize", myChart.resize);
+            return () => window.removeEventListener("resize", myChart.resize);
         }
     }, [chartData, cohortNames, loading]);
 
+    const applyFilters = () => {
+        fetchData(filters);
+        setDrawerOpen(false);
+    };
+
+    const resetFilters = () => {
+        const defaultFilters = {
+            start_date: null,
+            end_date: null,
+            quincena: ''
+        };
+        setFilters(defaultFilters);
+        fetchData(defaultFilters);
+        setDrawerOpen(false);
+    };
+
     return (
-        <div style={{ width: "100%", height: "100%" }}>
+        <Box sx={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
+            <Box sx={{ display: "flex", alignItems: "center", p: 1 }}>
+                <IconButton onClick={() => setDrawerOpen(true)} color="primary">
+                    <FilterListIcon />
+                </IconButton>
+                <Typography variant="h6" ml={1}>
+                    Filtro de Cohortes
+                </Typography>
+            </Box>
+
+            <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+                <Box
+                    sx={{
+                        width: 320,
+                        p: 3,
+                        height: "100%",
+                        backgroundColor: "#eae4ec",
+                        fontFamily: "Roboto, sans-serif",
+                    }}
+                >
+                    <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{ fontWeight: 600, color: "#A02383" }}
+                    >
+                        Filtros
+                    </Typography>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <DatePicker
+                                    label="Fecha Inicio"
+                                    value={filters.start_date}
+                                    onChange={(value) => setFilters({ ...filters, start_date: value })}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            variant: "outlined"
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <DatePicker
+                                    label="Fecha Fin"
+                                    value={filters.end_date}
+                                    onChange={(value) => setFilters({ ...filters, end_date: value })}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            variant: "outlined"
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Quincena"
+                                    type="number"
+                                    inputProps={{ min: 1, max: 36 }}
+                                    value={filters.quincena}
+                                    onChange={(e) => setFilters({ ...filters, quincena: e.target.value })}
+                                    size="small"
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={applyFilters}
+                                    sx={{
+                                        mt: 1,
+                                        fontWeight: 500,
+                                        backgroundColor: "#A02383",
+                                        "&:hover": {
+                                            backgroundColor: "#7c1d66",
+                                        },
+                                    }}
+                                >
+                                    Aplicar Filtros
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="outlined"
+                                    fullWidth
+                                    onClick={resetFilters}
+                                    sx={{
+                                        fontWeight: 500,
+                                        color: "#A02383",
+                                        borderColor: "#A02383",
+                                        "&:hover": {
+                                            backgroundColor: "#f4e9f2",
+                                            borderColor: "#7c1d66",
+                                            color: "#7c1d66",
+                                        },
+                                    }}
+                                >
+                                    Resetear Filtros
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </LocalizationProvider>
+                </Box>
+            </Drawer>
+
             {loading ? (
-                <p>Cargando datos...</p>
+                <Typography variant="body1" sx={{ p: 3 }}>Cargando datos...</Typography>
             ) : (
-                <div id="main" style={{ width: "100%", height: "100%" }}></div>
+                <Box id="main" sx={{ flexGrow: 1, minHeight: 0, width: "100%" }}></Box>
             )}
-        </div>
+        </Box>
     );
 };
 

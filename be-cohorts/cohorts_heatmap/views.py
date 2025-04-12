@@ -4,7 +4,12 @@ from .services.cohort_heatmap_services import get_cohorts_data
 def cohort_data(request):
     if request.method == 'GET':
         try:
-            data = get_cohorts_data()
+            start_date = request.GET.get('start_date')
+            end_date = request.GET.get('end_date')
+            quincena = request.GET.get('quincena')
+
+            # Pasar los filtros al servicio
+            data = get_cohorts_data(start_date=start_date, end_date=end_date, quincena=quincena)
             return JsonResponse(data, safe=False)
         except Exception as e:
             print(f"Error: {e}")
